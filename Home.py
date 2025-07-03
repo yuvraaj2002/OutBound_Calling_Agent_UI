@@ -58,10 +58,7 @@ The system will extract structured instructions and initiate personalized AI-pow
 
 col1, col2 = st.columns(2, gap="large")
 
-
 with col1:
-    
-
     # Streamlit dropdown to select the Audio record or file upload
     audio_option = st.selectbox("Select the suitable option", ["Voice command", "File upload"])
     if audio_option == "Voice command":
@@ -154,18 +151,18 @@ with col1:
                                         st.error("❌ BLANDAI_API_KEY not found in Streamlit secrets")
                                     else:
                                         headers = {
-                                        "Authorization": blandai_api_key,
-                                        "Content-Type": "application/json"
-                                    }
-                                    
-                                    call_payload = {
-                                        "agent_persona": payload.get("agent_persona", ""),
-                                        "objective": payload.get("objective", ""),
-                                        "contact_name": payload.get("contact_name", ""),
-                                        "agent_name": "linda",
-                                        "phone_number": payload.get("phone_number", "")
-                                    }
-                                    
+                                            "Authorization": blandai_api_key,
+                                            "Content-Type": "application/json"
+                                        }
+                                        
+                                        call_payload = {
+                                            "agent_persona": payload.get("agent_persona", ""),
+                                            "objective": payload.get("objective", ""),
+                                            "contact_name": payload.get("contact_name", ""),
+                                            "agent_name": "linda",
+                                            "phone_number": payload.get("phone_number", "")
+                                        }
+                                        
                                         response = requests.post(url, json=call_payload, headers=headers)
                                         
                                         # Check if the request was successful
@@ -224,7 +221,6 @@ with col1:
                     columns_list = list(df.columns)
                     st.write(", ".join(columns_list))
 
-
             initiate_call_button = st.button("Initiate Call", type="primary",use_container_width=True)
             if initiate_call_button:
                 
@@ -233,8 +229,3 @@ with col1:
                     st.error("There are duplicate values or missing values in the file. Please check the file and try again.")
                 else:
                     st.success("Call process initiated")
-                
-          
-
-
-          
