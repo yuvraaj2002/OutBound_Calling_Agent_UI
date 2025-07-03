@@ -1,13 +1,15 @@
 from openai import OpenAI
 import logging
-import os
-from dotenv import load_dotenv
+import streamlit as st
 from system_prompts import payload_extraction_prompt
-load_dotenv()
-openai_api_key = os.getenv("OPENAI_API_KEY")
 
 class OpenAIService:
     def __init__(self):
+        # Use st.secrets instead of os.getenv
+        openai_api_key = st.secrets.get("OPENAI_API_KEY")
+        if not openai_api_key:
+            raise ValueError("OPENAI_API_KEY not found in Streamlit secrets")
+        
         self.openai_client = OpenAI(api_key=openai_api_key)
         self.logger = logging.getLogger(__name__)
         

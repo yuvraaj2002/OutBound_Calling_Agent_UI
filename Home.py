@@ -6,9 +6,6 @@ import os
 from datetime import datetime
 from audio_recorder_streamlit import audio_recorder
 from openai_service import OpenAIService
-from dotenv import load_dotenv
-
-load_dotenv()
 
 # Force wide mode
 st.set_page_config(
@@ -150,8 +147,14 @@ with col1:
                                 else:
                                     # FastAPI backend endpoint to initiate the call (Post request with the payload)
                                     url = f"https://7315-2409-4050-2e83-9c1b-487c-a0c0-da01-f7a6.ngrok-free.app/api/initiate_call"
-                                    headers = {
-                                        "Authorization": os.getenv("BLANDAI_API_KEY"),
+                                    
+                                    # Use st.secrets for BlandAI API key
+                                    blandai_api_key = st.secrets.get("BLANDAI_API_KEY")
+                                    if not blandai_api_key:
+                                        st.error("❌ BLANDAI_API_KEY not found in Streamlit secrets")
+                                    else:
+                                        headers = {
+                                        "Authorization": blandai_api_key,
                                         "Content-Type": "application/json"
                                     }
                                     
@@ -163,15 +166,15 @@ with col1:
                                         "phone_number": payload.get("phone_number", "")
                                     }
                                     
-                                    response = requests.post(url, json=call_payload, headers=headers)
-                                    
-                                    # Check if the request was successful
-                                    if response.status_code == 200:
-                                        response_json = response.json()
-                                        st.success("✅ Call initiated successfully!")
-                                    else:
-                                        st.error(f"❌ Failed to initiate call. Status code: {response.status_code}")
-                                        st.write(f"Error: {response.text}")
+                                        response = requests.post(url, json=call_payload, headers=headers)
+                                        
+                                        # Check if the request was successful
+                                        if response.status_code == 200:
+                                            response_json = response.json()
+                                            st.success("✅ Call initiated successfully!")
+                                        else:
+                                            st.error(f"❌ Failed to initiate call. Status code: {response.status_code}")
+                                            st.write(f"Error: {response.text}")
 
                     except Exception as e:
                         st.error(f"❌ Error processing audio: {str(e)}")
