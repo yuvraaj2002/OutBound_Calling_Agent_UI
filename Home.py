@@ -156,7 +156,7 @@ with col1:
     contact_name = st.text_input("Contact Name", placeholder="Enter the contact's name", on_change=reset_validation)
     
     # Phone Number Input
-    phone_number = st.text_input("Phone Number", placeholder="Enter the phone number with E164 format (+12345678901)", on_change=reset_validation)
+    phone_number = st.text_input("Phone Number", placeholder="Enter the phone number with E164 format (e.g., +12345678901 for US)", on_change=reset_validation)
 
     # Creating button for call initiation
     if st.button("🚀 Initiate Call", type="primary", use_container_width=True):
