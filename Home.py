@@ -244,6 +244,7 @@ if audio_bytes:
     # Add padding below the button
     st.markdown("<div style='height: 40px;'></div>", unsafe_allow_html=True)
 
+st.markdown("<div style='height: 60px;'></div>", unsafe_allow_html=True)
 
 # if __name__ == "__main__":
 #     selected_tag_type = "CGM"
