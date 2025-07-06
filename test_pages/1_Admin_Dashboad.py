@@ -8,9 +8,6 @@ import plotly.express as px
 import plotly.graph_objects as go
 import time
 import requests
-from dotenv import load_dotenv
-
-load_dotenv()
 
 st.markdown(
     """
@@ -56,14 +53,14 @@ def dashboard_page():
 
     with st.spinner("Querying the database and calculating the metrics..."):
         # Fetch admin panel stats from external API endpoint
-        response = requests.get("https://7315-2409-4050-2e83-9c1b-487c-a0c0-da01-f7a6.ngrok-free.app/admin/dashboard/stats")
+        response = requests.get(f"https://{st.secrets.get('BASE_URL')}/admin/dashboard/stats")
         if response.status_code == 200:
             admin_panel_stats = response.json()
         else:
             st.error(f"Failed to fetch admin panel stats. Status code: {response.status_code}")
             admin_panel_stats = {}
         # Fetch admin panel data from external API endpoint
-        data_response = requests.get("https://7315-2409-4050-2e83-9c1b-487c-a0c0-da01-f7a6.ngrok-free.app/admin/calls?page=1&limit=50&status_filter=completed")
+        data_response = requests.get(f"https://{st.secrets.get('BASE_URL')}/admin/calls?page=1&limit=50&status_filter=completed")
         if data_response.status_code == 200:
             admin_panel_data = data_response.json().get('data', [])
         else:

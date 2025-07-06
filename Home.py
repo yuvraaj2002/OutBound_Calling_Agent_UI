@@ -6,14 +6,21 @@ import os
 from datetime import datetime
 from audio_recorder_streamlit import audio_recorder
 from openai_service import OpenAIService
+from langchain.prompts import ChatPromptTemplate
+from langchain_openai import ChatOpenAI
+from agent_config import *
+from langchain_core.messages import SystemMessage, HumanMessage
+import time
+from rich import print
 
 # Force wide mode
 st.set_page_config(
     page_title="Calling Agent",
     page_icon="🚀",
-    layout="wide",
+    layout="wide",  
     initial_sidebar_state="collapsed"
 )
+openai_service = OpenAIService()
 
 # Additional CSS to ensure wide mode
 st.markdown(
@@ -46,186 +53,202 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-openai_service = OpenAIService()
+def make_call(tag_type,contact_name,phone_number,agent_name,voice_id,creativity_level):
+    status = []
+    try:
+        agent_prompt = None
+        # Getting the Prompt Against the Tag Type
+        if tag_type == "CGM":
+            agent_prompt = cgm_outreach_prompt.format(agent_name=agent_name,company_name='OHC Pharmacy',contact_name=contact_name)
+        elif tag_type == "CPAP":
+            agent_prompt = cpap_prompt.format(agent_name=agent_name,company_name='OHC Pharmacy',contact_name=contact_name)
+        elif tag_type == "Weight Loss":
+            agent_prompt = weight_loss_prompt.format(agent_name=agent_name,company_name='OHC Pharmacy',contact_name=contact_name)
+        elif tag_type == "Wheelchair" or tag_type == "Walker" or tag_type == "Crutches" or tag_type == "Canes":
+            agent_prompt = wheelchair_walker_crutches_canes_prompt.format(agent_name=agent_name,company_name='OHC Pharmacy',contact_name=contact_name)
+        elif tag_type == "Briefs":
+            agent_prompt = briefs_prompt.format(agent_name=agent_name,company_name='OHC Pharmacy',contact_name=contact_name)
+        elif tag_type == "Compression":
+            agent_prompt = compression_prompt.format(agent_name=agent_name,company_name='OHC Pharmacy',contact_name=contact_name)
+        elif tag_type == "Orthopedic Shoes":
+            agent_prompt = orthopedic_shoes_prompt.format(agent_name=agent_name,company_name='OHC Pharmacy',contact_name=contact_name)
+        elif tag_type == "Diabetic Shoes":
+            agent_prompt = diabetic_shoes_prompt.format(agent_name=agent_name,company_name='OHC Pharmacy',contact_name=contact_name,phone_number=phone_number)
+        elif tag_type == "General DME":
+            agent_prompt = general_dme_prompt.format(agent_name=agent_name,company_name='OHC Pharmacy',contact_name=contact_name)
+        
+        status.append(("✅ Successfully retrieved the agent prompt", "success"))
+        time.sleep(1)
+
+        status.append(("✅ Completed pre-call configurations", "success"))
+        time.sleep(1)
+
+        payload = {
+            "phone_number": phone_number,
+            "task": agent_prompt,
+            "wait_for_greeting": True,
+            "block_interruptions": False,
+            "interruption_threshold": 70,
+            "model": "base",
+            "temperature": creativity_level,
+            "language": "en",   
+            "ignore_button_press": False,
+            "record": True,
+            "voice": voice_id,
+        }
+        
+        # Make the API call to BlandAI
+        headers = {
+            "authorization": st.secrets.get("BLANDAI_API_KEY"),
+            "Content-Type": "application/json"
+        }
+        response = requests.request("POST", "https://api.bland.ai/v1/calls", json=payload, headers=headers)
+        response.raise_for_status()
+        
+        # Parse the response from BlandAI
+        response_data = response.json()
+        call_id = response_data.get("call_id")
+        if call_id:
+            status.append(("✅ Call initialized successfully", "success"))
+        
+    except Exception as e:
+        status.append((f"Error in make_call: {e}", "error"))
+    return status
+
+def reset_validation():
+    st.session_state['call_validated'] = False
 
 st.title("Outbound Calling Agent📞")
 st.markdown("""
-**Welcome to the Outbound BlandAI Voice Calling Workflow.** Choose your input method:
-- **Voice Command**: Record your call objectives and talking points using the microphone
-- **File Upload**: Upload a document with call details for automatic processing
-The system will extract structured instructions and initiate personalized AI-powered calls.
+This application empowers you to automate and personalize outbound calls for your pharmacy or healthcare organization. Easily configure your call parameters, select the agent persona, and record or upload your call instructions—all in one place.
+
+**How it works:**
+- **Step 1:** Select the type of call (e.g., CGM, CPAP, Weight Loss, etc.) and choose your preferred AI agent voice and creativity level.
+- **Step 2:** Enter the recipient's name and phone number in the required format.
+- **Step 3:** Save time and reduce manual effort for routine outreach.
+- **Step 4:** Ensure every call is consistent, compliant, and tailored to your patient's needs.
+
+Get started by configuring your call settings on the left, and record your instructions below. Your next outbound call is just a few clicks away!
 """)
 
 col1, col2 = st.columns(2, gap="large")
 
 with col1:
-    # Streamlit dropdown to select the Audio record or file upload
-    audio_option = st.selectbox("Select the suitable option", ["Voice command", "File upload"])
-    if audio_option == "Voice command":
-        
-        with st.container(border=True):
-            # Audio recording using audio-recorder-streamlit
-            audio_bytes = audio_recorder(
-                text="Click to record your call instructions",
-                recording_color="#e74c3c",
-                neutral_color="#6c757d",
-                icon_name="microphone",
-                icon_size="2x"
-            )
+    st.markdown("### ⚙️ Call Configuration")
+    
+    # Tag Type Dropdown
+    tag_type_options = [
+        "CGM", "CPAP", "Weight Loss", "Wheelchair", "Walker", "Crutches", 
+        "Canes", "Briefs", "Compression", "Orthopedic Shoes", "Diabetic Shoes", "General DME"
+    ]
+    selected_tag_type = st.selectbox("Select Tag Type", tag_type_options, on_change=reset_validation)
+    
+    # Agent Type Dropdown
+    agent_type_options = ["Ava (Female)","Olivia (Female)", "Sophia (Female)","Grace (Female)","David (Male)"]
+    agent_name = st.selectbox("Select Agent Type", agent_type_options, on_change=reset_validation)
+    voice_id = get_voice_id(agent_name)
+    
+    # Agent Creativity Slider
+    creativity_level = st.slider("Agent Creativity Level", min_value=0.0, max_value=1.0, value=0.5, step=0.1, 
+                                help="Higher values make the agent more creative and flexible in responses", on_change=reset_validation)
+    
+    # Contact Name Input
+    contact_name = st.text_input("Contact Name", placeholder="Enter the contact's name", on_change=reset_validation)
+    
+    # Phone Number Input
+    phone_number = st.text_input("Phone Number", placeholder="Enter the phone number with E164 format (+12345678901)", on_change=reset_validation)
 
-        if audio_bytes:
-            st.session_state['audio_bytes'] = audio_bytes
-            st.success("✅ Audio recorded successfully!")
-            
-            # Save recorded audio to temporary file
-            with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as tmp_file:
-                tmp_file.write(audio_bytes)
-                tmp_file_path = tmp_file.name
-            
-            # Display audio player
-            if 'audio_bytes' in st.session_state:
-                st.audio(st.session_state['audio_bytes'], format="audio/wav")
-            
-            # Process button
-            if st.button("🚀 Initialize Processing", type="primary", use_container_width=True):
-                with st.spinner("Processing your audio..."):
-                    try:
-                        # Extracting the transcription from the .wav audio file
-                        transcription = openai_service.transcribe_audio(audio_file=open(tmp_file_path, "rb"))
-                        st.session_state['transcription'] = transcription
-                        
-                        with col2:
-                            st.markdown("### 📋 Transcription")
-                            st.write(transcription)
-                            st.markdown("### 🔍 Voice Agent Instructions")
-                            
-                            with st.spinner():
-                                payload = openai_service.get_response_with_retry(
-                                    transcription, 
-                                    ["agent_persona", "objective", "name", "phone_number"], 
-                                    1000
-                                )
-                                st.session_state['payload'] = payload
-                                
-                                # If payload is a string, parse it
-                                if isinstance(payload, str):
-                                    try:
-                                        payload = json.loads(payload)
-                                    except Exception as e:
-                                        st.error(f"Failed to parse payload as JSON: {e}")
-                                        payload = {}
+    # Creating button for call initiation
+    if st.button("🚀 Initiate Call", type="primary", use_container_width=True):
+        # Validation checks
+        if not phone_number or not selected_tag_type or not agent_name or not creativity_level or not contact_name:
+            st.error("❌ Please fill in all fields")
+            st.stop()
+        if not phone_number.startswith("+"):
+            st.error("❌ Phone number must start with a +")
+            st.stop()
+        if len(phone_number) < 10 or len(phone_number) > 15:
+            st.error("❌ Phone number must be between 10-15 digits")
+            st.stop()
+        # Only call make_call if all validations pass
+        call_status = make_call(selected_tag_type, contact_name, phone_number, agent_name, voice_id, creativity_level)
+        st.session_state['call_status'] = call_status
 
-                                if isinstance(payload, dict):
-                                    table_data = {
-                                        "Parameters": list(payload.keys()),
-                                        "Values": list(payload.values())
-                                    }
-                                    st.table(table_data)
-                                else:
-                                    st.warning("Payload is not a dictionary.")
+with col2:
+    st.markdown("### 📊 Call Status")
+    st.info("Configure your call settings in the left panel and record your voice instructions below.")
+    
+    # Show post-validation success messages from make_call
+    if 'call_status' in st.session_state:
+        for msg, msg_type in st.session_state['call_status']:
+            if msg_type == 'success':
+                st.success(msg)
+            elif msg_type == 'error':
+                st.error(msg)
+            elif msg_type == 'info':
+                st.info(msg)
 
-                                # Validate required fields
-                                required_fields = ["agent_persona", "objective", "contact_name", "phone_number"]
-                                missing_fields = []
-                                present_fields = []
-                                
-                                for field in required_fields:
-                                    field_value = payload.get(field, "").strip()
-                                    if not field_value:
-                                        missing_fields.append(field)
-                                    else:
-                                        present_fields.append(field)
-                                
-                                # Show validation results
-                                if missing_fields:
-                                    st.error(f"❌ Missing required fields: {', '.join(missing_fields)}")
-                                    if present_fields:
-                                        st.info(f"✅ Present fields: {', '.join(present_fields)}")
-                                else:
-                                    # FastAPI backend endpoint to initiate the call (Post request with the payload)
-                                    url = f"https://7315-2409-4050-2e83-9c1b-487c-a0c0-da01-f7a6.ngrok-free.app/api/initiate_call"
-                                    
-                                    # Use st.secrets for BlandAI API key
-                                    blandai_api_key = st.secrets.get("BLANDAI_API_KEY")
-                                    if not blandai_api_key:
-                                        st.error("❌ BLANDAI_API_KEY not found in Streamlit secrets")
-                                    else:
-                                        headers = {
-                                            "Authorization": blandai_api_key,
-                                            "Content-Type": "application/json"
-                                        }
-                                        
-                                        call_payload = {
-                                            "agent_persona": payload.get("agent_persona", ""),
-                                            "objective": payload.get("objective", ""),
-                                            "contact_name": payload.get("contact_name", ""),
-                                            "agent_name": "linda",
-                                            "phone_number": payload.get("phone_number", "")
-                                        }
-                                        
-                                        response = requests.post(url, json=call_payload, headers=headers)
-                                        
-                                        # Check if the request was successful
-                                        if response.status_code == 200:
-                                            response_json = response.json()
-                                            st.success("✅ Call initiated successfully!")
-                                        else:
-                                            st.error(f"❌ Failed to initiate call. Status code: {response.status_code}")
-                                            st.write(f"Error: {response.text}")
+# Audio section - Independent of columns
+st.markdown("---")
+st.markdown("# 🎤 Speech to Text Agent")
+st.success(
+    """
+    **How to use:**
+    - Click the microphone button below to start recording your voice instructions.
+    - Speak clearly and state your call objectives or any message you want transcribed.
+    - This feature is for testing only. Once you stop speaking for a few seconds, the recording will automatically stop and your audio will be processed.
+    - After recording, you can listen to your audio and view the transcription below.
+    """
+)
 
-                    except Exception as e:
-                        st.error(f"❌ Error processing audio: {str(e)}")
-                    finally:
-                        # Clean up temporary file
-                        if os.path.exists(tmp_file_path):
-                            os.unlink(tmp_file_path)
-    else:
-        # Only allow csv,xls, xlsx file
-        uploaded_file = st.file_uploader("Upload an audio file", type=["csv", "xls", "xlsx"])
-        if uploaded_file:
-            pass
+with st.container(border=True):
+    # Audio recording using audio-recorder-streamlit
+    audio_bytes = audio_recorder(
+        text="Click to record your call instructions",
+        recording_color="#e74c3c",
+        neutral_color="#6c757d",
+        icon_name="microphone",
+        icon_size="2x"
+    )
 
-            # Getting the credential of the file such as total rows, columns, etc.
-            with st.container(border=True):
+if audio_bytes:
+    st.session_state['audio_bytes'] = audio_bytes
+    st.success("✅ Audio recorded successfully!")
+    
+    # Save recorded audio to temporary file
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as tmp_file:
+        tmp_file.write(audio_bytes)
+        tmp_file_path = tmp_file.name
+    
+    # Display audio player
+    if 'audio_bytes' in st.session_state:
+        st.audio(st.session_state['audio_bytes'], format="audio/wav")
+    
+    # Process button
+    if st.button("🚀 Process Audio", type="primary", use_container_width=True):
+        with st.spinner("Processing your audio..."):
+            try:
+                # Extracting the transcription from the .wav audio file
+                transcription = openai_service.transcribe_audio(audio_file=open(tmp_file_path, "rb"))
+                st.session_state['transcription'] = transcription
                 
-                # Read the uploaded file based on its type
-                if uploaded_file.name.endswith('.csv'):
-                    import pandas as pd
-                    df = pd.read_csv(uploaded_file)
-                elif uploaded_file.name.endswith('.xls') or uploaded_file.name.endswith('.xlsx'):
-                    import pandas as pd
-                    df = pd.read_excel(uploaded_file)
-                
-                # Calculate file credentials
-                total_rows = len(df)
-                total_columns = len(df.columns)
-                missing_values = df.isnull().sum().sum()
-                duplicate_rows = df.duplicated().sum()
+                st.markdown("### 📋 Transcription")
+                st.write(transcription)
+                st.markdown("<br><br>", unsafe_allow_html=True)
+            except Exception as e:
+                st.error(f"❌ Error processing audio: {str(e)}")
+            finally:
+                # Clean up temporary file
+                if os.path.exists(tmp_file_path):
+                    os.unlink(tmp_file_path)
+    # Add padding below the button
+    st.markdown("<div style='height: 40px;'></div>", unsafe_allow_html=True)
 
-                with col2:
-                
-                    # Display file credentials in a structured format
-                    st.markdown("## 📋 File Credentials")
-                    file_credentials_col1, file_credentials_col2 = st.columns(2)
-                    
-                    with file_credentials_col1:
-                        st.metric("📊 Total Rows", total_rows)
-                        st.metric("📈 Total Columns", total_columns)
-                    
-                    with file_credentials_col2:
-                        st.metric("❌ Missing Values", missing_values)
-                        st.metric("🔄 Duplicate Rows", duplicate_rows)
-                    
-                    # Display list of columns
-                    st.markdown("**📋 List of Columns:**")
-                    columns_list = list(df.columns)
-                    st.write(", ".join(columns_list))
 
-            initiate_call_button = st.button("Initiate Call", type="primary",use_container_width=True)
-            if initiate_call_button:
-                
-                # Checking if there are any duplicate values or missing values we are raising an error
-                if duplicate_rows > 0 or missing_values > 0:
-                    st.error("There are duplicate values or missing values in the file. Please check the file and try again.")
-                else:
-                    st.success("Call process initiated")
+# if __name__ == "__main__":
+#     selected_tag_type = "CGM"
+#     phone_number = "+916239305919"
+#     agent_name = "Olivia"
+#     voice_id = get_voice_id(agent_name)
+#     creativity_level = 0.5
+#     make_call(selected_tag_type, phone_number, agent_name, voice_id, creativity_level)
