@@ -160,7 +160,7 @@ def dashboard_page():
         kpi_cols[2].markdown(f"""
             <div style="background:#fff;padding:20px 10px;border-radius:10px;text-align:center;box-shadow:0 2px 8px #e5e7eb;">
                 <h4 style="color:#222;">Avg. Call Duration</h4>
-                <h2 style="color:#2563eb;">{admin_panel_stats['average_call_duration']}s</h2>
+                <h2 style="color:#2563eb;">{admin_panel_stats['average_call_duration']} min</h2>
             </div>
         """, unsafe_allow_html=True)
 
@@ -209,14 +209,14 @@ def dashboard_page():
             fig3 = px.scatter(
                 x=call_indices,
                 y=durations,
-                labels={'x': 'Call #', 'y': 'Duration (seconds)'},
+                labels={'x': 'Call #', 'y': 'Duration (minutes)'},
                 color_discrete_sequence=[main_blue]
             )
             fig3.update_traces(marker=dict(size=10, opacity=0.7))
             fig3.update_layout(
                 title="Call Duration per Call",
                 xaxis_title="Call #",
-                yaxis_title="Duration (seconds)",
+                yaxis_title="Duration (minutes)",
                 showlegend=False
             )
             st.plotly_chart(fig3, use_container_width=True, key="call_duration_scatter")
