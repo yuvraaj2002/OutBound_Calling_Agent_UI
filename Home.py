@@ -59,23 +59,23 @@ def make_call(tag_type,contact_name,phone_number,agent_name,voice_id,creativity_
         agent_prompt = None
         # Getting the Prompt Against the Tag Type
         if tag_type == "CGM":
-            agent_prompt = cgm_outreach_prompt.format(agent_name=agent_name,company_name='OHC Pharmacy',contact_name=contact_name)
+            agent_prompt = cgm_outreach_prompt.format(agent_name=agent_name,company_name='OHC Pharmacy',company_details=company_details,contact_name=contact_name)
         elif tag_type == "CPAP":
-            agent_prompt = cpap_prompt.format(agent_name=agent_name,company_name='OHC Pharmacy',contact_name=contact_name)
+            agent_prompt = cpap_prompt.format(agent_name=agent_name,company_name='OHC Pharmacy',company_details=company_details,contact_name=contact_name)
         elif tag_type == "Weight Loss":
-            agent_prompt = weight_loss_prompt.format(agent_name=agent_name,company_name='OHC Pharmacy',contact_name=contact_name)
+            agent_prompt = weight_loss_prompt.format(agent_name=agent_name,company_name='OHC Pharmacy',company_details=company_details,contact_name=contact_name)
         elif tag_type == "Wheelchair" or tag_type == "Walker" or tag_type == "Crutches" or tag_type == "Canes":
-            agent_prompt = wheelchair_walker_crutches_canes_prompt.format(agent_name=agent_name,company_name='OHC Pharmacy',contact_name=contact_name)
+            agent_prompt = wheelchair_walker_crutches_canes_prompt.format(agent_name=agent_name,company_name='OHC Pharmacy',company_details=company_details,contact_name=contact_name)
         elif tag_type == "Briefs":
-            agent_prompt = briefs_prompt.format(agent_name=agent_name,company_name='OHC Pharmacy',contact_name=contact_name)
+            agent_prompt = briefs_prompt.format(agent_name=agent_name,company_name='OHC Pharmacy',company_details=company_details,contact_name=contact_name)
         elif tag_type == "Compression":
-            agent_prompt = compression_prompt.format(agent_name=agent_name,company_name='OHC Pharmacy',contact_name=contact_name)
+            agent_prompt = compression_prompt.format(agent_name=agent_name,company_name='OHC Pharmacy',company_details=company_details,contact_name=contact_name)
         elif tag_type == "Orthopedic Shoes":
-            agent_prompt = orthopedic_shoes_prompt.format(agent_name=agent_name,company_name='OHC Pharmacy',contact_name=contact_name)
+            agent_prompt = orthopedic_shoes_prompt.format(agent_name=agent_name,company_name='OHC Pharmacy',company_details=company_details,contact_name=contact_name)
         elif tag_type == "Diabetic Shoes":
-            agent_prompt = diabetic_shoes_prompt.format(agent_name=agent_name,company_name='OHC Pharmacy',contact_name=contact_name,phone_number=phone_number)
+            agent_prompt = diabetic_shoes_prompt.format(agent_name=agent_name,company_name='OHC Pharmacy',company_details=company_details,contact_name=contact_name,phone_number=phone_number)
         elif tag_type == "General DME":
-            agent_prompt = general_dme_prompt.format(agent_name=agent_name,company_name='OHC Pharmacy',contact_name=contact_name)
+            agent_prompt = general_dme_prompt.format(agent_name=agent_name,company_name='OHC Pharmacy',company_details=company_details,contact_name=contact_name)
         
         status.append(("✅ Successfully retrieved the agent prompt", "success"))
         time.sleep(1)

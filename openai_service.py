@@ -3,7 +3,7 @@ import logging
 import streamlit as st
 from langchain_openai import ChatOpenAI
 from langchain.prompts import ChatPromptTemplate
-from agent_config import payload_extraction_prompt
+from agent_config import *
 from langchain_core.messages import HumanMessage, SystemMessage
 from rich import print
 
