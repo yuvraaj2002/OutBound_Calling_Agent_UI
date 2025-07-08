@@ -5,10 +5,10 @@ import tempfile
 import os
 from datetime import datetime
 from audio_recorder_streamlit import audio_recorder
-from openai_service import OpenAIService
+from src.openai_service import OpenAIService
 from langchain.prompts import ChatPromptTemplate
 from langchain_openai import ChatOpenAI
-from agent_config import *
+from src.agent_config import *
 from langchain_core.messages import SystemMessage, HumanMessage
 import time
 from rich import print

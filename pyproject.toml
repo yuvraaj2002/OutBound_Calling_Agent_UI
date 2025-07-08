@@ -1,0 +1,17 @@
+[project]
+name = "outbound-calling-agent-ui"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "audio-recorder-streamlit>=0.0.10",
+    "langchain>=0.3.26",
+    "langchain-core>=0.3.68",
+    "langchain-openai>=0.3.27",
+    "openai>=1.93.1",
+    "openpyxl>=3.1.5",
+    "plotly>=6.2.0",
+    "rich>=14.0.0",
+    "streamlit>=1.46.1",
+]

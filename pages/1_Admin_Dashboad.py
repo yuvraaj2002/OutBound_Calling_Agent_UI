@@ -144,6 +144,9 @@ def dashboard_page():
             </div>
         """, unsafe_allow_html=True)
 
+        # Add vertical space between the two rows of KPI cards
+        st.markdown("<div style='height: 32px;'></div>", unsafe_allow_html=True)
+
         kpi_cols = st.columns(3)
         kpi_cols[0].markdown(f"""
             <div style="background:#fff;padding:20px 10px;border-radius:10px;text-align:center;box-shadow:0 2px 8px #e5e7eb;">
